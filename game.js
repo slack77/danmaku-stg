@@ -687,13 +687,6 @@
                             createParticles(e.x, e.y, '#ff5533', 15);
                             score += e.type === 'boss' ? 5000 : 100;
                             
-                            // 演出家: 撃破時のスクリーンシェイク
-                            if (e.type === 'boss') {
-                                shakeDuration = 40; // ボスは長く大きく揺らす
-                            } else {
-                                shakeDuration = Math.max(shakeDuration, 8); // 雑魚敵は軽く揺らす
-                            }
-                            
                             // アイテムドロップ (通常敵: 30%, ボス: 100%)
                             if (e.type === 'boss' || Math.random() < 0.3) {
                                 const r = Math.random();
@@ -792,13 +785,6 @@
             if (gameState !== 'playing') return;
 
             ctx.save();
-            // 画面揺れ
-            if (shakeDuration > 0) {
-                const shakeX = (Math.random() - 0.5) * 10;
-                const shakeY = (Math.random() - 0.5) * 10;
-                ctx.translate(shakeX, shakeY);
-                shakeDuration--;
-            }
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; // 残像効果
             ctx.fillRect(0, 0, canvas.width, canvas.height);
