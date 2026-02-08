@@ -387,6 +387,15 @@
                 // 連射速度のバランス調整 (Lv.1で7, Lv.5で4。程よい連射感に)
                 this.shotDelay = Math.max(4, 8 - this.powerLevel);
 
+                // ブースターエフェクト
+                if (frameCount % 2 === 0) {
+                    const p = new Particle(this.x, this.y + 15, '#00ffff');
+                    p.vx = (Math.random() - 0.5) * 2;
+                    p.vy = 2 + Math.random() * 3;
+                    p.life = 0.4;
+                    particles.push(p);
+                }
+
                 if (isAutoMode) {
                     this.updateAutoPilot();
                 } else {
@@ -519,42 +528,60 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 
-                // シールド描画
+                // シールド描画 (よりサイバーな円環に)
                 if (this.shield > 0) {
                     ctx.strokeStyle = '#00ffff';
-                    ctx.lineWidth = 3;
-                    ctx.globalAlpha = 0.7 + Math.sin(frameCount * 0.2) * 0.3; // 点滅
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]); // 点線
                     ctx.beginPath();
-                    ctx.arc(0, 0, this.displayRadius + 8, 0, Math.PI * 2);
+                    ctx.arc(0, 0, this.displayRadius + 10, frameCount * 0.05, frameCount * 0.05 + Math.PI * 2);
                     ctx.stroke();
-                    ctx.globalAlpha = 1.0;
+                    ctx.setLineDash([]);
                 }
 
                 // オプション描画
+                ctx.fillStyle = '#88ff88';
                 if (this.options >= 1) {
-                    ctx.fillStyle = '#88ff88';
-                    ctx.beginPath(); ctx.arc(-30, 10, 8, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(-30, 15, 6, 0, Math.PI*2); ctx.fill();
                 }
                 if (this.options >= 2) {
-                    ctx.fillStyle = '#88ff88';
-                    ctx.beginPath(); ctx.arc(30, 10, 8, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(30, 15, 6, 0, Math.PI*2); ctx.fill();
                 }
 
-                // 本体
-                ctx.fillStyle = this.missileTime > 0 ? '#ffaa00' : '#fff'; // ミサイルモード中は黄色
+                // 自機本体のデザイン (メカニカル)
+                // 1. ウィング
+                ctx.fillStyle = '#444';
+                ctx.beginPath();
+                ctx.moveTo(-this.displayRadius - 5, this.displayRadius);
+                ctx.lineTo(0, 0);
+                ctx.lineTo(this.displayRadius + 5, this.displayRadius);
+                ctx.fill();
+
+                // 2. メインボディ
+                const grad = ctx.createLinearGradient(0, -this.displayRadius, 0, this.displayRadius);
+                grad.addColorStop(0, '#fff');
+                grad.addColorStop(1, '#88ffff');
+                ctx.fillStyle = grad;
                 ctx.beginPath();
                 ctx.moveTo(0, -this.displayRadius);
-                ctx.lineTo(this.displayRadius, this.displayRadius);
-                ctx.lineTo(0, this.displayRadius * 0.5);
-                ctx.lineTo(-this.displayRadius, this.displayRadius);
+                ctx.lineTo(this.displayRadius, this.displayRadius * 0.5);
+                ctx.lineTo(0, this.displayRadius * 0.2);
+                ctx.lineTo(-this.displayRadius, this.displayRadius * 0.5);
                 ctx.closePath();
                 ctx.fill();
 
+                // 3. コックピット
+                ctx.fillStyle = '#f00';
+                ctx.beginPath();
+                ctx.arc(0, -2, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 当たり判定ドット
                 if (keys['ShiftLeft'] || mouse.useMouse) {
                     ctx.fillStyle = '#f00';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.stroke();
                 }
 
                 ctx.restore();
@@ -618,13 +645,49 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.fillStyle = this.type === 'boss' ? '#ff3366' : '#dd3333';
-                ctx.beginPath();
-                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                
+                if (this.type === 'normal') {
+                    // 回転フレーム
+                    ctx.rotate(this.age * 0.05);
+                    ctx.strokeStyle = '#dd3333';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        const r = this.radius;
+                        const angle = i * Math.PI * 2 / 6;
+                        ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    // コア
+                    ctx.fillStyle = '#ff0000';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'boss') {
+                    // ボスの巨大な円環
+                    for (let i = 1; i <= 3; i++) {
+                        ctx.save();
+                        ctx.rotate(this.age * 0.02 * (i % 2 === 0 ? 1 : -1));
+                        ctx.strokeStyle = i === 1 ? '#ff3366' : '#8833ff';
+                        ctx.lineWidth = 4;
+                        ctx.setLineDash([20, 10]);
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.radius * (i * 0.3 + 0.1), 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                    // ボスのコア
+                    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius * 0.3);
+                    grad.addColorStop(0, '#fff');
+                    grad.addColorStop(1, '#ff3366');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
                 ctx.restore();
             }
         }
