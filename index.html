@@ -293,15 +293,19 @@
             }
 
             draw() {
-                ctx.save();
-                ctx.globalCompositeOperation = 'lighter'; // 光らせる
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                // 外側の光の輪
+                ctx.globalAlpha = 0.4;
+                ctx.fillStyle = this.color;
+                ctx.arc(this.x, this.y, this.r * 1.8, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.restore();
+                
+                // 中心の白い核（これによってネオン感が出る）
+                ctx.beginPath();
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = '#fff';
+                ctx.arc(this.x, this.y, this.r * 0.7, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
@@ -822,15 +826,19 @@
             spawnEnemies();
 
             // 更新と描画をまとめて行う
+            ctx.globalCompositeOperation = 'lighter';
+            
             bullets = bullets.filter(b => b.update());
             bullets.forEach(b => b.draw());
 
             enemyBullets = enemyBullets.filter(b => b.update());
             enemyBullets.forEach(b => b.draw());
 
+            enemies.forEach(e => e.draw()); // 敵は通常描画
+            ctx.globalCompositeOperation = 'source-over';
             enemies = enemies.filter(e => e.update());
-            enemies.forEach(e => e.draw());
 
+            ctx.globalCompositeOperation = 'lighter';
             particles = particles.filter(p => p.update());
             particles.forEach(p => p.draw());
 
@@ -838,6 +846,7 @@
 
             items = items.filter(i => i.update());
             items.forEach(i => i.draw());
+            ctx.globalCompositeOperation = 'source-over';
 
             // フラッシュ演出
             if (flashEffect > 0) {
