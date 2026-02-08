@@ -1,0 +1,6 @@
+.vercel
+.gemini
+node_modules
+.DS_Store
+*.skill
+danmaku-dev-team/
