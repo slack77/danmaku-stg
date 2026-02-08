@@ -125,21 +125,41 @@
             constructor() {
                 this.patterns = [];
                 this.timer = 0;
+                this.stars = [];
+                // スターフィールドの初期化
+                for (let i = 0; i < 50; i++) {
+                    this.stars.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        speed: 1 + Math.random() * 5,
+                        size: 1 + Math.random() * 2
+                    });
+                }
             }
             update() {
                 this.timer++;
+                // スターの更新
+                for (const s of this.stars) {
+                    s.y += s.speed;
+                    if (s.y > canvas.height) {
+                        s.y = -10;
+                        s.x = Math.random() * canvas.width;
+                    }
+                }
+
                 // 定期的に新しい絵を追加
-                if (this.timer % 150 === 0) {
+                if (this.timer % 180 === 0) {
                     const keys = Object.keys(NAZCA_PATHS);
                     const type = keys[Math.floor(Math.random() * keys.length)];
                     const x = Math.random() * canvas.width;
-                    const scale = 2 + Math.random() * 3; // 大きさをランダムに
+                    const scale = 2 + Math.random() * 3;
                     this.patterns.push({
                         type: type,
                         x: x,
-                        y: -100,
+                        y: -200,
                         scale: scale,
-                        speed: 1.5 // スクロール速度
+                        speed: 1.2,
+                        opacity: 0
                     });
                 }
 
@@ -147,20 +167,54 @@
                 for (let i = this.patterns.length - 1; i >= 0; i--) {
                     const p = this.patterns[i];
                     p.y += p.speed;
-                    if (p.y > canvas.height + 100) {
+                    if (p.opacity < 0.4) p.opacity += 0.01; // フェードイン
+                    if (p.y > canvas.height + 200) {
                         this.patterns.splice(i, 1);
                     }
                 }
             }
             draw() {
-                ctx.save();
-                ctx.strokeStyle = '#334433'; // 暗い緑色（古代遺跡風）
-                ctx.lineWidth = 3;
+                // 1. 背景の奥底
+                ctx.fillStyle = '#050a05'; // 非常に深い緑
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 2. サイバーグリッド (テクノ演出)
+                ctx.strokeStyle = '#0a220a';
+                ctx.lineWidth = 1;
+                const gridSize = 40;
+                const offset = (this.timer * 2) % gridSize;
                 
+                // 横線
+                for (let y = offset; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                // 縦線
+                for (let x = 0; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+
+                // 3. スターフィールド (スピード感)
+                ctx.fillStyle = '#114422';
+                for (const s of this.stars) {
+                    ctx.fillRect(s.x, s.y, s.size, s.size);
+                }
+                
+                // 4. ナスカの地上絵 (ネオン・古代テクノ)
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
                 for (const p of this.patterns) {
                     const path = NAZCA_PATHS[p.type];
                     ctx.beginPath();
-                    ctx.setTransform(p.scale, 0, 0, p.scale, p.x, p.y); // 座標変換
+                    ctx.setTransform(p.scale, 0, 0, p.scale, p.x, p.y);
+                    
+                    ctx.strokeStyle = `rgba(0, 255, 100, ${p.opacity})`;
+                    ctx.lineWidth = 1.5;
                     
                     if (path.length > 0) {
                         ctx.moveTo(path[0][0], path[0][1]);
