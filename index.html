@@ -384,8 +384,8 @@
             update() {
                 if (this.missileTime > 0) this.missileTime--;
 
-                // パワーレベルに応じて連射速度を上げる (初期5, 最大3まで短縮)
-                this.shotDelay = Math.max(2, 6 - this.powerLevel);
+                // 連射速度のバランス調整 (Lv.1で7, Lv.5で4。程よい連射感に)
+                this.shotDelay = Math.max(4, 8 - this.powerLevel);
 
                 if (isAutoMode) {
                     this.updateAutoPilot();
@@ -474,44 +474,42 @@
             }
 
             shoot() {
-                // メインショット (パワーに応じてサイズと色を変更)
-                const bulletR = 4 + this.powerLevel;
+                // メインショット (サイズを少し控えめに)
+                const bulletR = 3 + this.powerLevel * 0.8;
                 const bulletColor = this.powerLevel >= 4 ? '#ffffff' : '#88ffff';
                 
-                // 中央の弾 (常に発射)
-                bullets.push(new Bullet(this.x - 8, this.y, 0, -16, bulletR, bulletColor, 'player'));
-                bullets.push(new Bullet(this.x + 8, this.y, 0, -16, bulletR, bulletColor, 'player'));
+                // 中央の弾
+                bullets.push(new Bullet(this.x - 6, this.y, 0, -16, bulletR, bulletColor, 'player'));
+                bullets.push(new Bullet(this.x + 6, this.y, 0, -16, bulletR, bulletColor, 'player'));
                 
                 if (this.powerLevel >= 2) {
-                    bullets.push(new Bullet(this.x - 16, this.y, -1, -15, bulletR - 1, '#88ccff', 'player'));
-                    bullets.push(new Bullet(this.x + 16, this.y, 1, -15, bulletR - 1, '#88ccff', 'player'));
+                    bullets.push(new Bullet(this.x - 12, this.y, -0.5, -15, bulletR - 1, '#88ccff', 'player'));
+                    bullets.push(new Bullet(this.x + 12, this.y, 0.5, -15, bulletR - 1, '#88ccff', 'player'));
                 }
                 if (this.powerLevel >= 3) {
-                     bullets.push(new Bullet(this.x - 24, this.y, -3, -14, bulletR - 1, '#66aaff', 'player'));
-                     bullets.push(new Bullet(this.x + 24, this.y, 3, -14, bulletR - 1, '#66aaff', 'player'));
+                     bullets.push(new Bullet(this.x - 18, this.y, -1.5, -14, bulletR - 1, '#66aaff', 'player'));
+                     bullets.push(new Bullet(this.x + 18, this.y, 1.5, -14, bulletR - 1, '#66aaff', 'player'));
                 }
                 if (this.powerLevel >= 4) {
-                     bullets.push(new Bullet(this.x - 32, this.y, -5, -12, bulletR - 2, '#4488ff', 'player'));
-                     bullets.push(new Bullet(this.x + 32, this.y, 5, -12, bulletR - 2, '#4488ff', 'player'));
+                     bullets.push(new Bullet(this.x - 24, this.y, -2.5, -13, bulletR - 2, '#4488ff', 'player'));
+                     bullets.push(new Bullet(this.x + 24, this.y, 2.5, -13, bulletR - 2, '#4488ff', 'player'));
                 }
                 if (this.powerLevel >= 5) {
-                     // レベル5: 画面を埋め尽くすV字ショット
-                     bullets.push(new Bullet(this.x - 40, this.y, -7, -10, bulletR - 2, '#0055ff', 'player'));
-                     bullets.push(new Bullet(this.x + 40, this.y, 7, -10, bulletR - 2, '#0055ff', 'player'));
-                     bullets.push(new Bullet(this.x, this.y - 10, 0, -20, bulletR + 2, '#ffffff', 'player')); // 特大センター弾
+                     // レベル5: 豪華だが「無双しすぎない」密度
+                     bullets.push(new Bullet(this.x - 30, this.y, -4, -12, bulletR - 2, '#0055ff', 'player'));
+                     bullets.push(new Bullet(this.x + 30, this.y, 4, -12, bulletR - 2, '#0055ff', 'player'));
                 }
 
                 // オプションからの射撃
                 if (this.options >= 1) {
-                    bullets.push(new Bullet(this.x - 40, this.y + 10, 0, -18, 4, '#88ff88', 'player'));
+                    bullets.push(new Bullet(this.x - 30, this.y + 10, 0, -18, 4, '#88ff88', 'player'));
                 }
                 if (this.options >= 2) {
-                    bullets.push(new Bullet(this.x + 40, this.y + 10, 0, -18, 4, '#88ff88', 'player'));
+                    bullets.push(new Bullet(this.x + 30, this.y + 10, 0, -18, 4, '#88ff88', 'player'));
                 }
 
-                // ホーミングミサイル (パワー5なら頻度2倍)
-                const missileInterval = this.powerLevel >= 5 ? 5 : 10;
-                if (this.missileTime > 0 && frameCount % missileInterval === 0) {
+                // ホーミングミサイル (頻度を少し落とす)
+                if (this.missileTime > 0 && frameCount % 12 === 0) {
                      bullets.push(new Missile(this.x - 20, this.y, -2, -5));
                      bullets.push(new Missile(this.x + 20, this.y, 2, -5));
                 }
