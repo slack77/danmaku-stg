@@ -316,9 +316,9 @@
                 this.target = null;
             }
             update() {
-                // ターゲット検索
+                // ターゲット検索 (より頻繁に、かつ正確に)
                 if (!this.target || this.target.hp <= 0) {
-                     let minDist = Infinity;
+                     let minDist = 1000;
                      this.target = null;
                      for(const e of enemies) {
                          const d = dist(this.x, this.y, e.x, e.y);
@@ -329,29 +329,37 @@
                      }
                 }
                 
-                // 追尾性能強化
+                // 超高性能誘導ロジック
                 if (this.target) {
-                    const angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
-                    // 旋回性能と加速を強化
-                    this.vx += Math.cos(angle) * 1.5; 
-                    this.vy += Math.sin(angle) * 1.5;
-                    // 最高速度アップ
-                    const speed = Math.sqrt(this.vx**2 + this.vy**2);
-                    if (speed > 15) { // 10 -> 15
-                        this.vx = (this.vx / speed) * 15;
-                        this.vy = (this.vy / speed) * 15;
-                    }
+                    const dx = this.target.x - this.x;
+                    const dy = this.target.y - this.y;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    // 現在の速度ベクトルと目標方向の差を埋める（クイック旋回）
+                    const targetVx = Math.cos(angle) * 18;
+                    const targetVy = Math.sin(angle) * 18;
+                    
+                    // 慣性を打ち消して目標方向に鋭く曲がる (0.3 -> 0.5に強化)
+                    this.vx += (targetVx - this.vx) * 0.5;
+                    this.vy += (targetVy - this.vy) * 0.5;
+                } else {
+                    // ターゲットがいない場合は直進加速
+                    this.vy -= 0.5;
                 }
 
                 this.x += this.vx;
                 this.y += this.vy;
                 
-                // トレイル
-                if (frameCount % 3 === 0) {
-                    particles.push(new Particle(this.x, this.y, '#88ffff'));
+                // トレイル（ミサイルの後ろに出る煙のような光）
+                if (frameCount % 2 === 0) {
+                    const p = new Particle(this.x, this.y, '#00ffff');
+                    p.vx = -this.vx * 0.2;
+                    p.vy = -this.vy * 0.2;
+                    p.life = 0.5;
+                    particles.push(p);
                 }
 
-                return this.x > -50 && this.x < canvas.width + 50 && this.y > -50 && this.y < canvas.height + 50;
+                return this.x > -100 && this.x < canvas.width + 100 && this.y > -100 && this.y < canvas.height + 100;
             }
         }
 
