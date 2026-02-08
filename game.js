@@ -388,10 +388,31 @@
                 moveX += (centerX - this.x) * 0.05;
                 moveY += (centerY - this.y) * 0.05;
 
-                this.x += moveX;
-                this.y += moveY;
-            }
-
+                            this.x += moveX;
+                            this.y += moveY;
+                
+                            // 調整役: オートパイロット時の緊急ボム（最後の手段）
+                            if (this.bombStock > 0) {
+                                let urgentDanger = false;
+                                for (const b of enemyBullets) {
+                                    const d = dist(this.x, this.y, b.x, b.y);
+                                    // 非常に近くに弾があり、シールドがない、またはシールドが最後の一枚
+                                    if (d < 50 && this.shield <= 0) {
+                                        urgentDanger = true;
+                                        break;
+                                    }
+                                }
+                
+                                // 画面内の敵弾が多すぎて圧倒されている場合も発動
+                                if (enemyBullets.length > 35 && dangerCount > 5) {
+                                    urgentDanger = true;
+                                }
+                
+                                if (urgentDanger) {
+                                    triggerBomb();
+                                }
+                            }
+                        }
             shoot() {
                 // メインショット (サイズを少し控えめに)
                 const bulletR = 3 + this.powerLevel * 0.8;
