@@ -910,6 +910,42 @@
             items.forEach(i => i.draw());
             ctx.globalCompositeOperation = 'source-over';
 
+            // --- 演出家: ボスHPゲージの描画 ---
+            const boss = enemies.find(e => e.type === 'boss');
+            if (boss) {
+                const padding = 40;
+                const gaugeW = canvas.width - padding * 2;
+                const gaugeH = 8;
+                const x = padding;
+                const y = 30;
+
+                // ゲージの背景（枠）
+                ctx.fillStyle = 'rgba(0, 255, 100, 0.1)';
+                ctx.fillRect(x, y, gaugeW, gaugeH);
+                ctx.strokeStyle = 'rgba(0, 255, 100, 0.5)';
+                ctx.strokeRect(x, y, gaugeW, gaugeH);
+
+                // 現在のHP割合
+                const hpRate = boss.hp / boss.maxHp;
+                const currentW = gaugeW * hpRate;
+
+                // ゲージ本体（ネオン発光）
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                const hue = 120 * hpRate; // 緑(120)から赤(0)へ変化
+                ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+                ctx.fillRect(x, y, currentW, gaugeH);
+                ctx.restore();
+
+                // ボス名称の表示
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px "Courier New"';
+                ctx.textAlign = 'left';
+                ctx.fillText('ANCIENT GUARDIAN: SYSTEM OVERRIDE', x, y - 10);
+            }
+
             // フラッシュ演出
             if (flashEffect > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashEffect / 20})`;
