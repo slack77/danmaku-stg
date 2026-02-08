@@ -35,6 +35,11 @@
             font-size: 18px;
             text-shadow: 1px 1px 2px #000;
         }
+        #bomb-container {
+            margin-top: 5px;
+            color: #cc33ff;
+            font-weight: bold;
+        }
         #game-over {
             position: absolute;
             top: 50%;
@@ -72,7 +77,9 @@
         <canvas id="gameCanvas" width="600" height="800"></canvas>
         <div id="ui-layer">
             Score: <span id="score">0</span> <br>
-            <button id="auto-btn" onclick="toggleAutoMode()">AUTO: OFF</button>
+            <div id="bomb-container">BOMB: <span id="bomb-stock">0</span></div>
+            <button id="auto-btn" onclick="toggleAutoMode()" style="pointer-events: auto;">AUTO: OFF</button>
+            <button id="bomb-btn" onclick="triggerBomb()" style="pointer-events: auto; background: #cc33ff; margin-left: 5px;">BURST(X)</button>
         </div>
         <div id="game-over">
             <h1>GAME OVER</h1>
@@ -91,12 +98,14 @@
         const finalScoreEl = document.getElementById('final-score');
         const gameOverEl = document.getElementById('game-over');
         const autoBtn = document.getElementById('auto-btn');
+        const bombStockEl = document.getElementById('bomb-stock');
 
         // ゲームの状態
         let gameState = 'playing'; // playing, gameover
         let score = 0;
         let frameCount = 0;
         let isAutoMode = false;
+        let shakeDuration = 0;
 
         function toggleAutoMode() {
             isAutoMode = !isAutoMode;
@@ -105,6 +114,30 @@
             // オート時はマウス入力を無効化（干渉を防ぐ）
             mouse.useMouse = false;
         }
+
+        function triggerBomb() {
+            if (player.bombStock > 0 && gameState === 'playing') {
+                player.bombStock--;
+                bombStockEl.textContent = player.bombStock;
+                shakeDuration = 20; // 画面を揺らす
+                
+                // 画面内の敵弾をすべて消去し、パーティクルに変換
+                for (const b of enemyBullets) {
+                    createParticles(b.x, b.y, b.color, 3);
+                }
+                enemyBullets = [];
+                
+                // 全ての敵にダメージ
+                for (const e of enemies) {
+                    e.hp -= 50;
+                    createParticles(e.x, e.y, '#ff3366', 10);
+                }
+                
+                // ボム発動エフェクト用フラッシュ
+                flashEffect = 15;
+            }
+        }
+        let flashEffect = 0;
 
         let bullets = [];
         let enemyBullets = [];
@@ -121,6 +154,10 @@
         window.addEventListener('keydown', e => {
             if (e.code === 'KeyA') {
                 toggleAutoMode();
+                return;
+            }
+            if (e.code === 'KeyX') {
+                triggerBomb();
                 return;
             }
             if (isAutoMode) return; // オート中はキー無効
@@ -256,12 +293,15 @@
             }
 
             draw() {
+                ctx.save();
                 ctx.globalCompositeOperation = 'lighter'; // 光らせる
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.globalCompositeOperation = 'source-over';
+                ctx.restore();
             }
         }
 
@@ -326,6 +366,7 @@
                 this.missileTime = 0; 
                 this.options = 0;
                 this.shield = 0; // シールド枚数
+                this.bombStock = 3; // 初期ボム数
             }
 
             update() {
@@ -741,6 +782,15 @@
         function loop() {
             if (gameState !== 'playing') return;
 
+            ctx.save();
+            // 画面揺れ
+            if (shakeDuration > 0) {
+                const shakeX = (Math.random() - 0.5) * 10;
+                const shakeY = (Math.random() - 0.5) * 10;
+                ctx.translate(shakeX, shakeY);
+                shakeDuration--;
+            }
+
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; // 残像効果
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -771,6 +821,14 @@
             items = items.filter(i => i.update());
             items.forEach(i => i.draw());
 
+            // フラッシュ演出
+            if (flashEffect > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashEffect / 20})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                flashEffect--;
+            }
+            ctx.restore();
+
             scoreEl.textContent = score;
             frameCount++;
             requestAnimationFrame(loop);
@@ -788,6 +846,7 @@
             frameCount = 0;
             gameState = 'playing';
             gameOverEl.style.display = 'none';
+            bombStockEl.textContent = player.bombStock; // UI初期化
             loop();
         }
 
