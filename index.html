@@ -487,17 +487,17 @@
                     bullets.push(new Bullet(this.x + 12, this.y, 0.5, -15, bulletR - 1, '#88ccff', 'player'));
                 }
                 if (this.powerLevel >= 3) {
-                     bullets.push(new Bullet(this.x - 18, this.y, -1.5, -14, bulletR - 1, '#66aaff', 'player'));
-                     bullets.push(new Bullet(this.x + 18, this.y, 1.5, -14, bulletR - 1, '#66aaff', 'player'));
+                     bullets.push(new Bullet(this.x - 18, this.y, -2.5, -14, bulletR - 1, '#66aaff', 'player'));
+                     bullets.push(new Bullet(this.x + 18, this.y, 2.5, -14, bulletR - 1, '#66aaff', 'player'));
                 }
                 if (this.powerLevel >= 4) {
-                     bullets.push(new Bullet(this.x - 24, this.y, -2.5, -13, bulletR - 2, '#4488ff', 'player'));
-                     bullets.push(new Bullet(this.x + 24, this.y, 2.5, -13, bulletR - 2, '#4488ff', 'player'));
+                     bullets.push(new Bullet(this.x - 24, this.y, -5, -13, bulletR - 2, '#4488ff', 'player'));
+                     bullets.push(new Bullet(this.x + 24, this.y, 5, -13, bulletR - 2, '#4488ff', 'player'));
                 }
                 if (this.powerLevel >= 5) {
-                     // レベル5: 豪華だが「無双しすぎない」密度
-                     bullets.push(new Bullet(this.x - 30, this.y, -4, -12, bulletR - 2, '#0055ff', 'player'));
-                     bullets.push(new Bullet(this.x + 30, this.y, 4, -12, bulletR - 2, '#0055ff', 'player'));
+                     // レベル5: 角度をさらに広げて制圧
+                     bullets.push(new Bullet(this.x - 30, this.y, -8, -12, bulletR - 2, '#0055ff', 'player'));
+                     bullets.push(new Bullet(this.x + 30, this.y, 8, -12, bulletR - 2, '#0055ff', 'player'));
                 }
 
                 // オプションからの射撃
