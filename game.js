@@ -12,6 +12,7 @@
         let frameCount = 0;
         let isAutoMode = false;
         let shakeDuration = 0;
+        let bossSpawnTimer = 0; // ボス出現用タイマー
 
         function toggleAutoMode() {
             isAutoMode = !isAutoMode;
@@ -664,9 +665,22 @@
                 const x = Math.random() * (canvas.width - 40) + 20;
                 enemies.push(new Enemy(x, -20, 10, 'normal'));
             }
-            // ボス出現（スコアが一定以上で、まだいなければ）
-            if (score > 1000 && !enemies.some(e => e.type === 'boss')) {
-                 enemies.push(new Enemy(canvas.width/2, -50, 500, 'boss'));
+
+            // ボス出現ロジックの改善
+            const hasBoss = enemies.some(e => e.type === 'boss');
+            if (score > 1000 && !hasBoss) {
+                bossSpawnTimer++;
+                // 約3秒(180フレーム)待機
+                if (bossSpawnTimer > 180) {
+                    enemies.push(new Enemy(canvas.width/2, -50, 500, 'boss'));
+                    bossSpawnTimer = 0; // タイマーリセット
+                } else {
+                    // ボス出現前の「中だるみ」を防ぐため、追加の雑魚敵を出す
+                    if (bossSpawnTimer % 40 === 0) {
+                        const x = Math.random() * (canvas.width - 40) + 20;
+                        enemies.push(new Enemy(x, -20, 10, 'normal'));
+                    }
+                }
             }
         }
 
@@ -844,6 +858,7 @@
             nazcaBg = new NazcaBackground(); // 背景初期化
             score = 0;
             frameCount = 0;
+            bossSpawnTimer = 0;
             gameState = 'playing';
             gameOverEl.style.display = 'none';
             bombStockEl.textContent = player.bombStock; // UI初期化
